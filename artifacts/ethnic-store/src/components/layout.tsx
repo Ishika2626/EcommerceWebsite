@@ -187,14 +187,26 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           
           <div className="border-t border-border/60 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} VastraVerge. All rights reserved.
-            </p>
-            <div className="flex gap-4">
-              {/* Social placeholders */}
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary cursor-pointer hover:bg-primary hover:text-white transition-colors">In</div>
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary cursor-pointer hover:bg-primary hover:text-white transition-colors">Fb</div>
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary cursor-pointer hover:bg-primary hover:text-white transition-colors">Tw</div>
+            <div className="flex flex-col items-center md:items-start gap-1">
+              <p className="text-xs text-muted-foreground">
+                © {new Date().getFullYear()} VastraVerge. All rights reserved.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Made by{" "}
+                <a
+                  href="mailto:ishikajariwala@email.com"
+                  className="text-primary font-medium hover:underline transition-colors"
+                >
+                  Ishika Jariwala
+                </a>
+              </p>
+            </div>
+            <div className="flex gap-3">
+              {/* Social links — update hrefs with real URLs */}
+              <a href="#" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">In</a>
+              <a href="#" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">Fb</a>
+              <a href="#" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">Tw</a>
+              <a href="#" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">Ig</a>
             </div>
           </div>
         </div>
