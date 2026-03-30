@@ -43,7 +43,7 @@ export function Layout({ children }: { children: ReactNode }) {
             {/* Logo */}
             <div className="flex-shrink-0 flex items-center justify-center flex-1 md:flex-none md:justify-start">
               <Link href="/" className="font-display text-2xl font-bold tracking-wider text-primary hover:opacity-80 transition-opacity">
-                EthnicVibe
+                VastraVerge
               </Link>
             </div>
 
@@ -140,7 +140,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
             <div className="space-y-4">
-              <h3 className="font-display text-2xl font-bold text-primary">EthnicVibe</h3>
+              <h3 className="font-display text-2xl font-bold text-primary">VastraVerge</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Celebrating the rich heritage of Indian craftsmanship with our curated collection of elegant ethnic wear.
               </p>
@@ -188,7 +188,7 @@ export function Layout({ children }: { children: ReactNode }) {
           
           <div className="border-t border-border/60 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} EthnicVibe. All rights reserved.
+              © {new Date().getFullYear()} VastraVerge. All rights reserved.
             </p>
             <div className="flex gap-4">
               {/* Social placeholders */}

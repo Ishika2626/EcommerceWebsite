@@ -22,7 +22,7 @@ export default function OrderConfirmation() {
           </div>
           <h1 className="font-display text-4xl font-bold text-foreground mb-4">Order Confirmed!</h1>
           <p className="text-lg text-muted-foreground">
-            Thank you for shopping with EthnicVibe. Your order #{order.id} has been placed successfully.
+            Thank you for shopping with VastraVerge. Your order #{order.id} has been placed successfully.
           </p>
         </div>
 

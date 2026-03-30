@@ -39,7 +39,7 @@ export default function Register() {
         <div className="bg-card/90 backdrop-blur-xl border border-white/20 p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-md relative z-10">
           <div className="text-center mb-8">
             <h1 className="font-display text-4xl font-bold text-primary mb-2">Create Account</h1>
-            <p className="text-muted-foreground">Join EthnicVibe today</p>
+            <p className="text-muted-foreground">Join VastraVerge today</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
