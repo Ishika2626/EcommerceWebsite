@@ -6,6 +6,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCartStore } from "@/hooks/use-cart-store";
 import { cn } from "@/lib/utils";
 
+const MARQUEE_ITEMS = [
+  "📦 Free Shipping in India",
+  "🌍 International Courier Available (Ship Extra)",
+  "📱 WhatsApp: +91 9974460041",
+  "✨ New Festive Collection Live",
+  "📦 Free Shipping in India",
+  "🌍 International Courier Available (Ship Extra)",
+  "📱 WhatsApp: +91 9974460041",
+  "✨ New Festive Collection Live",
+];
+
 export function Layout({ children }: { children: ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [location] = useLocation();
@@ -21,9 +32,24 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-background text-foreground">
-      {/* Top Announcement Bar */}
-      <div className="bg-primary text-primary-foreground text-xs py-2 text-center font-medium tracking-wide">
-        Free Shipping on all orders above ₹5,000 | New Festive Collection Live
+      {/* Marquee Announcement Bar */}
+      <div className="bg-primary text-primary-foreground text-xs py-2 overflow-hidden relative">
+        <div
+          className="flex whitespace-nowrap"
+          style={{ animation: "marquee 28s linear infinite" }}
+        >
+          {MARQUEE_ITEMS.map((item, i) => (
+            <span key={i} className="inline-block px-8 font-medium tracking-wide">
+              {item}
+            </span>
+          ))}
+        </div>
+        <style>{`
+          @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+        `}</style>
       </div>
 
       {/* Main Header */}
@@ -101,9 +127,10 @@ export function Layout({ children }: { children: ReactNode }) {
                 </div>
               </div>
 
-              <Link href="/cart" className="p-2 text-muted-foreground hover:text-primary transition-colors relative">
+              {/* Cart icon — redirect to login if not authenticated */}
+              <Link href={isAuthenticated ? "/cart" : "/login?redirect=/cart"} className="p-2 text-muted-foreground hover:text-primary transition-colors relative">
                 <ShoppingBag className="h-5 w-5" />
-                {cart && cart.itemCount > 0 && (
+                {isAuthenticated && cart && cart.itemCount > 0 && (
                   <span className="absolute top-1 right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-accent rounded-full">
                     {cart.itemCount}
                   </span>
@@ -126,6 +153,8 @@ export function Layout({ children }: { children: ReactNode }) {
                 {link.name}
               </Link>
             ))}
+            <Link href="/about" className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:text-primary hover:bg-primary/5" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
+            <Link href="/contact" className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:text-primary hover:bg-primary/5" onClick={() => setIsMobileMenuOpen(false)}>Contact</Link>
           </div>
         </div>
       </header>
@@ -144,6 +173,36 @@ export function Layout({ children }: { children: ReactNode }) {
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Celebrating the rich heritage of Indian craftsmanship with our curated collection of elegant ethnic wear.
               </p>
+              {/* Social Icons */}
+              <div className="flex gap-3 pt-2">
+                <a
+                  href="https://www.instagram.com/vastraverge/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Instagram"
+                  className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors"
+                >
+                  Ig
+                </a>
+                <a
+                  href="https://wa.me/919974460041"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="WhatsApp"
+                  className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors"
+                >
+                  Wp
+                </a>
+                <a
+                  href="https://youtube.com/@vastraverge"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="YouTube"
+                  className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors"
+                >
+                  Yt
+                </a>
+              </div>
             </div>
             
             <div>
@@ -152,7 +211,17 @@ export function Layout({ children }: { children: ReactNode }) {
                 <li><Link href="/" className="hover:text-primary transition-colors">Home</Link></li>
                 <li><Link href="/products" className="hover:text-primary transition-colors">Shop All</Link></li>
                 <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
-                <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
+                <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
+                <li>
+                  <a
+                    href="https://wa.me/919974460041"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-primary transition-colors"
+                  >
+                    Join WhatsApp Group
+                  </a>
+                </li>
               </ul>
             </div>
 
@@ -172,15 +241,23 @@ export function Layout({ children }: { children: ReactNode }) {
               <ul className="space-y-3 text-sm text-muted-foreground">
                 <li className="flex items-start gap-3">
                   <span className="mt-0.5">📍</span>
-                  <span>123 Heritage Lane, Textiles Hub<br/>Mumbai, India 400001</span>
+                  <span>Surat, Gujarat, India</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <span>📞</span>
-                  <span>+91 98765 43210</span>
+                  <span>
+                    <a href="tel:+919974460041" className="hover:text-primary transition-colors">+91 9974460041</a>
+                    {" / "}
+                    <a href="tel:+917802820906" className="hover:text-primary transition-colors">+91 7802820906</a>
+                  </span>
                 </li>
                 <li className="flex items-center gap-3">
                   <span>✉️</span>
-                  <span>hello@ethnicvibe.com</span>
+                  <a href="mailto:vastraverge@gmail.com" className="hover:text-primary transition-colors">vastraverge@gmail.com</a>
+                </li>
+                <li className="flex items-center gap-3">
+                  <span>💬</span>
+                  <a href="https://wa.me/919974460041" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">WhatsApp Us</a>
                 </li>
               </ul>
             </div>
@@ -194,7 +271,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <p className="text-xs text-muted-foreground">
                 Made by{" "}
                 <a
-                  href="mailto:ishikajariwala@email.com"
+                  href="mailto:ishikaaa.jariwala@gmail.com"
                   className="text-primary font-medium hover:underline transition-colors"
                 >
                   Ishika Jariwala
@@ -202,11 +279,9 @@ export function Layout({ children }: { children: ReactNode }) {
               </p>
             </div>
             <div className="flex gap-3">
-              {/* Social links — update hrefs with real URLs */}
-              <a href="#" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">In</a>
-              <a href="#" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">Fb</a>
-              <a href="#" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">Tw</a>
-              <a href="#" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">Ig</a>
+              <a href="https://www.instagram.com/vastraverge/" target="_blank" rel="noopener noreferrer" title="Instagram" className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">Ig</a>
+              <a href="https://wa.me/919974460041" target="_blank" rel="noopener noreferrer" title="WhatsApp" className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">Wp</a>
+              <a href="https://youtube.com/@vastraverge" target="_blank" rel="noopener noreferrer" title="YouTube" className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">Yt</a>
             </div>
           </div>
         </div>

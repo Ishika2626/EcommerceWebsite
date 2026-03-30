@@ -10,6 +10,8 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 interface CartContextType {
   cart: Cart | undefined;
@@ -26,6 +28,8 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const { isAuthenticated } = useAuth();
   
   const { data: cart, isLoading } = useGetCart({
     query: { retry: false }
@@ -41,6 +45,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         });
       },
       onError: (err: any) => {
+        const status = err?.response?.status ?? err?.status;
+        if (status === 401) {
+          toast({
+            title: "Please login",
+            description: "You need to be logged in to add items to your cart.",
+          });
+          setLocation("/login?redirect=/cart");
+          return;
+        }
         toast({
           variant: "destructive",
           title: "Failed to add item",
@@ -71,7 +84,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const value = {
     cart,
     isLoading,
-    addItem: async (item: AddToCartRequest) => { await addMutation.mutateAsync({ data: item }); },
+    addItem: async (item: AddToCartRequest) => {
+      if (!isAuthenticated) {
+        toast({ title: "Please login", description: "You need to be logged in to add items to your cart." });
+        setLocation("/login?redirect=/cart");
+        return;
+      }
+      await addMutation.mutateAsync({ data: item });
+    },
     updateQuantity: async (productId: number, quantity: number) => { 
       await updateMutation.mutateAsync({ productId, data: { quantity } }); 
     },

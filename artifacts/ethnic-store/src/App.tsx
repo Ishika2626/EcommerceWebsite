@@ -1,10 +1,11 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart-store";
 import NotFound from "@/pages/not-found";
+import { ReactNode } from "react";
 
 // Pages
 import Home from "./pages/home";
@@ -16,6 +17,8 @@ import OrderConfirmation from "./pages/order-confirmation";
 import MyOrders from "./pages/my-orders";
 import Login from "./pages/login";
 import Register from "./pages/register";
+import AboutUs from "./pages/about";
+import ContactUs from "./pages/contact";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/dashboard";
@@ -33,6 +36,22 @@ const queryClient = new QueryClient({
   },
 });
 
+function ProtectedRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [location] = useLocation();
+  if (isLoading) return null;
+  if (!isAuthenticated) return <Redirect to={`/login?redirect=${encodeURIComponent(location)}`} />;
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (!isAuthenticated) return <Redirect to="/login" />;
+  if (!isAdmin) return <Redirect to="/" />;
+  return <>{children}</>;
+}
+
 function Router() {
   return (
     <Switch>
@@ -40,24 +59,46 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/products" component={Products} />
       <Route path="/products/:id" component={ProductDetail} />
-      
+      <Route path="/about" component={AboutUs} />
+      <Route path="/contact" component={ContactUs} />
+
       {/* Auth Routes */}
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      
-      {/* User Protected Routes (Guards should ideally be implemented at component level or via a wrapper, for now we let API throw 401 and handle) */}
-      <Route path="/cart" component={CartPage} />
-      <Route path="/checkout" component={CheckoutPage} />
-      <Route path="/orders/:id" component={OrderConfirmation} />
-      <Route path="/my-orders" component={MyOrders} />
-      
+
+      {/* User Protected Routes */}
+      <Route path="/cart">
+        <ProtectedRoute><CartPage /></ProtectedRoute>
+      </Route>
+      <Route path="/checkout">
+        <ProtectedRoute><CheckoutPage /></ProtectedRoute>
+      </Route>
+      <Route path="/orders/:id">
+        <ProtectedRoute><OrderConfirmation /></ProtectedRoute>
+      </Route>
+      <Route path="/my-orders">
+        <ProtectedRoute><MyOrders /></ProtectedRoute>
+      </Route>
+
       {/* Admin Routes */}
-      <Route path="/admin" component={AdminDashboard} />
-      <Route path="/admin/products" component={AdminProducts} />
-      <Route path="/admin/products/new" component={AdminProductForm} />
-      <Route path="/admin/products/:id/edit" component={AdminProductForm} />
-      <Route path="/admin/orders" component={AdminOrders} />
-      <Route path="/admin/categories" component={AdminCategories} />
+      <Route path="/admin">
+        <AdminRoute><AdminDashboard /></AdminRoute>
+      </Route>
+      <Route path="/admin/products">
+        <AdminRoute><AdminProducts /></AdminRoute>
+      </Route>
+      <Route path="/admin/products/new">
+        <AdminRoute><AdminProductForm /></AdminRoute>
+      </Route>
+      <Route path="/admin/products/:id/edit">
+        <AdminRoute><AdminProductForm /></AdminRoute>
+      </Route>
+      <Route path="/admin/orders">
+        <AdminRoute><AdminOrders /></AdminRoute>
+      </Route>
+      <Route path="/admin/categories">
+        <AdminRoute><AdminCategories /></AdminRoute>
+      </Route>
 
       <Route component={NotFound} />
     </Switch>

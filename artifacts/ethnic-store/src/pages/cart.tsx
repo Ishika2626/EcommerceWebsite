@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout";
 import { useCartStore } from "@/hooks/use-cart-store";
 import { formatPrice } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
-import { Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { Trash2, ShoppingBag, ArrowRight, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function CartPage() {
