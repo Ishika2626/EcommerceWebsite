@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Ethnic Clothing Store"
+version = "1.0.0"
+id = "artifacts/ethnic-store"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24370
+
+[services.development]
+run = "pnpm --filter @workspace/ethnic-store run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ethnic-store", "run", "build" ]
+publicDir = "artifacts/ethnic-store/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24370"
+BASE_PATH = "/"

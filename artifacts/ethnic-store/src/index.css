@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-display: 'Cinzel', serif;
+  --font-sans: 'Outfit', sans-serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  /* Warm Cream Background */
+  --background: 40 33% 98%;
+  /* Deep Brown/Charcoal Text */
+  --foreground: 25 33% 13%;
+  
+  /* Deep Maroon / Burgundy - the core brand color */
+  --primary: 345 60% 28%;
+  --primary-foreground: 40 33% 98%;
+  
+  /* Antique Gold Accent */
+  --accent: 43 74% 49%;
+  --accent-foreground: 25 33% 13%;
+  
+  /* Soft warm beige for secondary elements */
+  --secondary: 39 25% 90%;
+  --secondary-foreground: 25 33% 13%;
+  
+  --muted: 39 20% 92%;
+  --muted-foreground: 25 15% 45%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 25 33% 13%;
+  
+  --border: 39 25% 85%;
+  --input: 39 25% 85%;
+  --ring: 345 60% 28%;
+  
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --radius: 0.5rem;
+}
+
+.dark {
+  /* For a truly luxurious dark mode, we use deep charcoal, not black */
+  --background: 25 20% 10%;
+  --foreground: 40 33% 95%;
+  
+  --primary: 345 50% 40%;
+  --primary-foreground: 40 33% 98%;
+  
+  --accent: 43 60% 55%;
+  --accent-foreground: 25 20% 10%;
+  
+  --secondary: 25 15% 20%;
+  --secondary-foreground: 40 33% 95%;
+  
+  --muted: 25 15% 20%;
+  --muted-foreground: 40 20% 70%;
+  
+  --card: 25 18% 13%;
+  --card-foreground: 40 33% 95%;
+  
+  --border: 25 15% 25%;
+  --input: 25 15% 25%;
+  --ring: 43 60% 55%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply font-semibold tracking-tight;
+  }
+}
+
+/* Custom Utilities for elegant textures and shadows */
+@layer utilities {
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#aa7c11];
+  }
+  
+  .glass-card {
+    @apply bg-background/80 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+  }
+
+  .pattern-overlay {
+    background-image: url('/images/pattern.png');
+    background-repeat: repeat;
+    opacity: 0.05;
+    mix-blend-mode: multiply;
+  }
+}

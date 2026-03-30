@@ -1,0 +1,24 @@
+packages:
+  "framer-motion": "For premium page transitions and UI micro-interactions"
+  "lucide-react": "For beautiful consistent iconography"
+  "recharts": "For the admin dashboard analytics charts"
+  "date-fns": "For formatting order dates and times"
+  "clsx": "For conditional class merging"
+  "tailwind-merge": "For merging tailwind classes safely"
+  "embla-carousel-react": "For the product image gallery"
+
+images:
+  - path: "artifacts/ethnic-store/public/images/hero-bg.png"
+    description: "Elegant Indian cultural background, luxurious silk fabric texture in deep maroon and antique gold with subtle glowing light"
+    aspect_ratio: "16:9"
+  - path: "artifacts/ethnic-store/public/images/auth-bg.png"
+    description: "Beautiful intricate traditional Indian mandala pattern overlay on a soft warm cream background, subtle and elegant"
+    aspect_ratio: "16:9"
+  - path: "artifacts/ethnic-store/public/images/pattern.png"
+    description: "Seamless subtle block print ethnic pattern in light beige on a cream background, for use as a section background"
+    aspect_ratio: "1:1"
+
+notes:
+  - App uses @workspace/api-client-react for all data fetching based on OpenAPI
+  - Auth relies on HTTP-only cookies, /api/auth/me checks session
+  - Cart state is managed server-side per session via /api/cart
