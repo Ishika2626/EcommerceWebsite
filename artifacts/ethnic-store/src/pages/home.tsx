@@ -1,9 +1,17 @@
 import { Layout } from "@/components/layout";
 import { Link } from "wouter";
-import { useListProducts } from "@workspace/api-client-react";
+import { useListProducts, useListCategories } from "@workspace/api-client-react";
 import { ProductCard } from "@/components/product-card";
-import { ArrowRight, Star, ShieldCheck, Truck, RefreshCcw, Globe, MessageCircle, Package } from "lucide-react";
+import { ArrowRight, ShieldCheck, Truck, RefreshCcw, Globe } from "lucide-react";
 import { motion } from "framer-motion";
+
+const FALLBACK_IMAGES = [
+  "https://images.unsplash.com/photo-1610189013444-24b455b55dd6?w=600&q=80",
+  "https://images.unsplash.com/photo-1597983073493-88cd35cf93b0?w=600&q=80",
+  "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80",
+  "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=600&q=80",
+  "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600&q=80",
+];
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -16,12 +24,7 @@ function WhatsAppIcon({ className }: { className?: string }) {
 export default function Home() {
   const { data: trendingData, isLoading: trendingLoading } = useListProducts({ params: { limit: 4, sort: "popular" } });
   const { data: newData, isLoading: newLoading } = useListProducts({ params: { limit: 4, sort: "newest" } });
-
-  const categories = [
-    { id: 1, name: "Sarees", desc: "Elegance in six yards", img: "https://images.unsplash.com/photo-1610189013444-24b455b55dd6?w=600&q=80" },
-    { id: 2, name: "Kurtas", desc: "Comfort meets style", img: "https://images.unsplash.com/photo-1597983073493-88cd35cf93b0?w=600&q=80" },
-    { id: 3, name: "Lehengas", desc: "For your special days", img: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80" },
-  ];
+  const { data: categoriesData, isLoading: categoriesLoading } = useListCategories();
 
   return (
     <Layout>
@@ -116,31 +119,43 @@ export default function Home() {
             <div className="w-24 h-1 bg-accent mx-auto rounded-full"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {categories.map((cat, i) => (
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-                className="group relative h-[420px] rounded-3xl overflow-hidden shadow-lg cursor-pointer"
-              >
-                <Link href={`/products?category=${cat.id}`}>
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors z-10" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
-                  <img src={cat.img} alt={cat.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
-                  <div className="absolute bottom-0 left-0 p-8 z-20 w-full">
-                    <h3 className="font-display text-3xl font-bold text-white mb-2">{cat.name}</h3>
-                    <p className="text-white/80 mb-4 font-medium">{cat.desc}</p>
-                    <span className="inline-flex items-center text-accent font-semibold group-hover:translate-x-2 transition-transform">
-                      Explore <ArrowRight className="w-4 h-4 ml-1" />
-                    </span>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+          {categoriesLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[1, 2, 3].map(i => <div key={i} className="h-[420px] bg-muted animate-pulse rounded-3xl" />)}
+            </div>
+          ) : (categoriesData ?? []).length === 0 ? (
+            <p className="text-center text-muted-foreground py-10">No categories yet. Add some from the admin panel.</p>
+          ) : (
+            <div className={`grid gap-8 ${(categoriesData ?? []).length === 1 ? "grid-cols-1 max-w-md mx-auto" : (categoriesData ?? []).length === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-3"}`}>
+              {(categoriesData ?? []).map((cat, i) => (
+                <motion.div
+                  key={cat.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.15 }}
+                  className="group relative h-[420px] rounded-3xl overflow-hidden shadow-lg cursor-pointer"
+                >
+                  <Link href={`/products?category=${cat.id}`}>
+                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
+                    <img
+                      src={cat.image || FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]}
+                      alt={cat.name}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                    />
+                    <div className="absolute bottom-0 left-0 p-8 z-20 w-full">
+                      <h3 className="font-display text-3xl font-bold text-white mb-2">{cat.name}</h3>
+                      {cat.description && <p className="text-white/80 mb-4 font-medium">{cat.description}</p>}
+                      <span className="inline-flex items-center text-accent font-semibold group-hover:translate-x-2 transition-transform">
+                        Explore <ArrowRight className="w-4 h-4 ml-1" />
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useCartStore } from "@/hooks/use-cart-store";
 import { cn } from "@/lib/utils";
+import { useListCategories } from "@workspace/api-client-react";
 
 const MARQUEE_ITEMS = [
   "📦 Free Shipping in India",
@@ -46,12 +47,12 @@ export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { cart } = useCartStore();
+  const { data: categories } = useListCategories();
 
-  const navLinks = [
-    { name: "Sarees", href: "/products?category=1" },
-    { name: "Kurtas", href: "/products?category=2" },
-    { name: "Lehengas", href: "/products?category=3" },
-  ];
+  const navLinks = (categories ?? []).map(cat => ({
+    name: cat.name,
+    href: `/products?category=${cat.id}`,
+  }));
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-background text-foreground">

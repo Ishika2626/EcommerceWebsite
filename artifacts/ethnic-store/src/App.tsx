@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart-store";
 import NotFound from "@/pages/not-found";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 
 // Pages
 import Home from "./pages/home";
@@ -52,9 +52,19 @@ function AdminRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [location]);
+  return null;
+}
+
 function Router() {
   return (
-    <Switch>
+    <>
+      <ScrollToTop />
+      <Switch>
       {/* Public Routes */}
       <Route path="/" component={Home} />
       <Route path="/products" component={Products} />
@@ -101,7 +111,8 @@ function Router() {
       </Route>
 
       <Route component={NotFound} />
-    </Switch>
+      </Switch>
+    </>
   );
 }
 

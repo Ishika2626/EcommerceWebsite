@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { Truck, X, Save, MapPin, Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Truck, X, Save, MapPin, Copy, Check, ChevronDown, ChevronUp, Package } from "lucide-react";
 import { Pagination } from "@/components/pagination";
 
 interface TrackingFormState {
@@ -99,6 +99,119 @@ function AddressBlock({ address }: { address: any }) {
                 </>
               )}
             </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface OrderItem {
+  productId: number;
+  productName: string;
+  price: number;
+  quantity: number;
+  size?: string;
+  color?: string;
+}
+
+function ItemsBlock({ items, total }: { items: OrderItem[]; total: number }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  if (!items || items.length === 0) return null;
+
+  const summary = items.map(it => `${it.productName} x${it.quantity}${it.size ? ` (${it.size})` : ""}${it.color ? ` [${it.color}]` : ""}`).join(", ");
+
+  const fullText = items
+    .map(it =>
+      [
+        `Product: ${it.productName} (ID: ${it.productId})`,
+        `Qty: ${it.quantity}`,
+        it.size ? `Size: ${it.size}` : null,
+        it.color ? `Color: ${it.color}` : null,
+        `Price: ₹${it.price}`,
+      ]
+        .filter(Boolean)
+        .join(" | ")
+    )
+    .join("\n");
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(fullText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = fullText;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="border-t border-border">
+      <button
+        onClick={() => setOpen(p => !p)}
+        className="w-full flex items-center gap-2 px-4 md:px-6 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-colors text-left"
+      >
+        <Package className="w-3.5 h-3.5 text-primary shrink-0" />
+        <span className="flex-1 truncate">{summary}</span>
+        {open ? <ChevronUp className="w-3.5 h-3.5 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 shrink-0" />}
+      </button>
+
+      {open && (
+        <div className="px-4 md:px-6 pb-4 bg-muted/10">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
+              <span className="text-xs font-semibold text-foreground uppercase tracking-wide">Order Items</span>
+              <button
+                onClick={handleCopy}
+                title="Copy order details"
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border transition-all ${
+                  copied
+                    ? "bg-green-50 border-green-200 text-green-700"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary hover:bg-primary/5"
+                }`}
+              >
+                {copied ? <><Check className="w-3 h-3" /> Copied!</> : <><Copy className="w-3 h-3" /> Copy Details</>}
+              </button>
+            </div>
+            <div className="divide-y divide-border">
+              {items.map((item, i) => (
+                <div key={i} className="flex items-start gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-foreground truncate">{item.productName}</p>
+                    <p className="text-xs text-muted-foreground">ID: #{item.productId}</p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {item.size && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-medium">
+                          Size: {item.size}
+                        </span>
+                      )}
+                      {item.color && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-accent/10 text-accent-foreground text-xs font-medium">
+                          Color: {item.color}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-muted-foreground">Qty</p>
+                    <p className="font-bold text-foreground">{item.quantity}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">₹{item.price}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end px-4 py-2 border-t border-border bg-muted/20">
+              <span className="text-sm font-bold text-primary">Total: ₹{total}</span>
+            </div>
           </div>
         </div>
       )}
@@ -254,6 +367,9 @@ export default function AdminOrders() {
                     </select>
                   </div>
                 </div>
+
+                {/* Order Items (collapsible, copyable) */}
+                <ItemsBlock items={(order as any).items ?? []} total={order.total} />
 
                 {/* Shipping Address (collapsible, copyable) */}
                 <AddressBlock address={(order as any).shippingAddress} />
