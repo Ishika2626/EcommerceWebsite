@@ -92,13 +92,13 @@ export default function Home() {
               { icon: ShieldCheck, title: "Secure Payment", desc: "COD & Online via Razorpay" },
               { icon: RefreshCcw, title: "Easy Returns", desc: "7-day return policy" },
             ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex items-center gap-4 bg-card p-5 rounded-2xl shadow-sm">
+              <div key={title} className="flex items-center gap-3 bg-card p-4 rounded-2xl shadow-sm min-w-0">
                 <div className="bg-primary/10 p-3 rounded-full text-primary shrink-0">
                   <Icon className="w-5 h-5" />
                 </div>
-                <div>
-                  <h3 className="font-bold text-foreground text-sm">{title}</h3>
-                  <p className="text-xs text-muted-foreground">{desc}</p>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-foreground text-sm truncate">{title}</h3>
+                  <p className="text-xs text-muted-foreground leading-snug break-words">{desc}</p>
                 </div>
               </div>
             ))}
