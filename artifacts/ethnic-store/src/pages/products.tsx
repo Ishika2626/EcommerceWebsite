@@ -2,29 +2,81 @@ import { Layout } from "@/components/layout";
 import { ProductCard } from "@/components/product-card";
 import { useListProducts, useListCategories } from "@workspace/api-client-react";
 import { useSearch } from "wouter";
-import { Search, Filter, SlidersHorizontal, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, Filter, SlidersHorizontal, Loader2, PackageX } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+
+const PAGE_SIZE = 12;
 
 export default function Products() {
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
-  
+
   const [searchTerm, setSearchTerm] = useState(params.get("search") || "");
-  const [category, setCategory] = useState<number | undefined>(params.get("category") ? Number(params.get("category")) : undefined);
+  const [category, setCategory] = useState<number | undefined>(
+    params.get("category") ? Number(params.get("category")) : undefined
+  );
   const [sort, setSort] = useState<any>(params.get("sort") || "newest");
-  
-  const { data, isLoading } = useListProducts({
-    params: {
-      search: searchTerm || undefined,
-      category,
-      sort,
-      limit: 12
-    }
+  const [page, setPage] = useState(1);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const filtersKey = `${searchTerm}|${category ?? ""}|${sort}`;
+  const prevFiltersKey = useRef(filtersKey);
+
+  const { data, isLoading, isFetching } = useListProducts({
+    params: { search: searchTerm || undefined, category, sort, limit: PAGE_SIZE, page },
   });
 
-  const { data: categories } = useListCategories();
+  // When filters change reset pagination
+  useEffect(() => {
+    if (prevFiltersKey.current !== filtersKey) {
+      prevFiltersKey.current = filtersKey;
+      setPage(1);
+      setAllProducts([]);
+      setTotal(0);
+      setTotalPages(1);
+    }
+  }, [filtersKey]);
 
-  // Simple debounced search
+  // Accumulate products across pages
+  useEffect(() => {
+    if (!data?.products) return;
+    setTotal(data.total ?? 0);
+    setTotalPages(data.totalPages ?? 1);
+    if (page === 1) {
+      setAllProducts(data.products as any[]);
+    } else {
+      setAllProducts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const fresh = (data.products as any[]).filter((p) => !existingIds.has(p.id));
+        return [...prev, ...fresh];
+      });
+    }
+  }, [data, page]);
+
+  const hasMore = page < totalPages;
+
+  const loadMore = useCallback(() => {
+    if (!isFetching && hasMore) {
+      setPage((prev) => prev + 1);
+    }
+  }, [isFetching, hasMore]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMore(); },
+      { rootMargin: "300px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  // Sync filters to URL
   useEffect(() => {
     const handler = setTimeout(() => {
       const urlParams = new URLSearchParams();
@@ -35,6 +87,8 @@ export default function Products() {
     }, 500);
     return () => clearTimeout(handler);
   }, [searchTerm, category, sort]);
+
+  const { data: categoriesData } = useListCategories();
 
   return (
     <Layout>
@@ -70,25 +124,29 @@ export default function Products() {
               </h3>
               <div className="space-y-3">
                 <label className="flex items-center gap-3 cursor-pointer group">
-                  <input 
-                    type="radio" 
-                    name="category" 
+                  <input
+                    type="radio"
+                    name="category"
                     checked={!category}
                     onChange={() => setCategory(undefined)}
                     className="w-4 h-4 text-primary bg-background border-border focus:ring-primary"
                   />
-                  <span className="text-muted-foreground group-hover:text-foreground transition-colors">All Categories</span>
+                  <span className="text-muted-foreground group-hover:text-foreground transition-colors">
+                    All Categories
+                  </span>
                 </label>
-                {categories?.map(cat => (
+                {categoriesData?.map((cat) => (
                   <label key={cat.id} className="flex items-center gap-3 cursor-pointer group">
-                    <input 
-                      type="radio" 
-                      name="category" 
+                    <input
+                      type="radio"
+                      name="category"
                       checked={category === cat.id}
                       onChange={() => setCategory(cat.id)}
                       className="w-4 h-4 text-primary bg-background border-border focus:ring-primary"
                     />
-                    <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cat.name}</span>
+                    <span className="text-muted-foreground group-hover:text-foreground transition-colors">
+                      {cat.name}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -99,7 +157,9 @@ export default function Products() {
           <div className="flex-1">
             <div className="flex justify-between items-center mb-6 pb-4 border-b border-border">
               <p className="text-sm font-medium text-muted-foreground">
-                Showing {data?.products.length || 0} of {data?.total || 0} products
+                Showing{" "}
+                <span className="text-foreground font-semibold">{allProducts.length}</span> of{" "}
+                <span className="text-foreground font-semibold">{total}</span> products
               </p>
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
@@ -116,28 +176,45 @@ export default function Products() {
               </div>
             </div>
 
-            {isLoading ? (
+            {isLoading && page === 1 ? (
               <div className="flex justify-center py-20">
                 <Loader2 className="w-10 h-10 animate-spin text-primary" />
               </div>
-            ) : data?.products.length === 0 ? (
+            ) : allProducts.length === 0 ? (
               <div className="text-center py-20 bg-card rounded-2xl border border-border">
-                <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <PackageX className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">No products found</h3>
                 <p className="text-muted-foreground">Try adjusting your filters or search term.</p>
-                <button 
-                  onClick={() => { setSearchTerm(""); setCategory(undefined); }}
+                <button
+                  onClick={() => { setSearchTerm(""); setCategory(undefined); setSort("newest"); }}
                   className="mt-6 text-primary font-medium hover:underline"
                 >
                   Clear all filters
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {data?.products.map((product, i) => (
-                  <ProductCard key={product.id} product={product} index={i} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {allProducts.map((product, i) => (
+                    <ProductCard key={product.id} product={product} index={i} />
+                  ))}
+                </div>
+
+                {/* Infinite scroll sentinel */}
+                <div ref={sentinelRef} className="h-10 mt-2" />
+
+                {isFetching && page > 1 && (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="w-7 h-7 animate-spin text-primary" />
+                  </div>
+                )}
+
+                {!hasMore && allProducts.length > 0 && (
+                  <p className="text-center text-muted-foreground text-sm py-6 border-t border-border mt-4">
+                    You&apos;ve seen all {total} products
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -5,7 +5,8 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { Truck, X, Save } from "lucide-react";
+import { Truck, X, Save, MapPin, Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Pagination } from "@/components/pagination";
 
 interface TrackingFormState {
   trackingId: string;
@@ -13,21 +14,119 @@ interface TrackingFormState {
   trackingNote: string;
 }
 
+function AddressBlock({ address }: { address: any }) {
+  const [copied, setCopied] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  if (!address) return null;
+
+  const lines = [
+    address.fullName,
+    address.phone,
+    address.addressLine1,
+    address.addressLine2,
+    [address.city, address.state, address.pincode].filter(Boolean).join(", "),
+    address.country,
+  ].filter(Boolean);
+
+  const fullText = lines.join("\n");
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(fullText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = fullText;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="border-t border-border">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="w-full flex items-center gap-2 px-4 md:px-6 py-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-colors text-left"
+      >
+        <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+        <span className="flex-1 truncate">
+          {address.fullName} — {address.addressLine1}, {address.city}
+        </span>
+        {open ? <ChevronUp className="w-3.5 h-3.5 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 shrink-0" />}
+      </button>
+
+      {open && (
+        <div className="px-4 md:px-6 pb-4 bg-muted/10">
+          <div className="flex items-start justify-between gap-4 bg-card border border-border rounded-xl p-4">
+            <div className="space-y-1 text-sm">
+              <p className="font-semibold text-foreground">{address.fullName}</p>
+              {address.phone && (
+                <p className="text-muted-foreground">{address.phone}</p>
+              )}
+              <p className="text-foreground">{address.addressLine1}</p>
+              {address.addressLine2 && (
+                <p className="text-foreground">{address.addressLine2}</p>
+              )}
+              <p className="text-foreground">
+                {[address.city, address.state, address.pincode].filter(Boolean).join(", ")}
+              </p>
+              {address.country && (
+                <p className="text-muted-foreground">{address.country}</p>
+              )}
+            </div>
+            <button
+              onClick={handleCopy}
+              title="Copy full address"
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                copied
+                  ? "bg-green-50 border-green-200 text-green-700"
+                  : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary hover:bg-primary/5"
+              }`}
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5" /> Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" /> Copy
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminOrders() {
-  const { data, isLoading, refetch } = useAdminListOrders();
+  const [page, setPage] = useState(1);
+
+  const { data, isLoading, refetch } = useAdminListOrders({
+    params: { page },
+  });
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [trackingOpen, setTrackingOpen] = useState<number | null>(null);
   const [trackingForms, setTrackingForms] = useState<Record<number, TrackingFormState>>({});
   const [savingTracking, setSavingTracking] = useState<number | null>(null);
 
+  const totalPages = data?.totalPages ?? 1;
+
   const updateMutation = useUpdateOrderStatus({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [`/api/admin/orders`] });
         toast({ title: "Order status updated" });
-      }
-    }
+      },
+    },
   });
 
   const handleStatusChange = (id: number, status: string) => {
@@ -35,13 +134,13 @@ export default function AdminOrders() {
   };
 
   const openTracking = (order: any) => {
-    setTrackingForms(prev => ({
+    setTrackingForms((prev) => ({
       ...prev,
       [order.id]: {
         trackingId: order.trackingId || "",
         trackingUrl: order.trackingUrl || "",
         trackingNote: order.trackingNote || "",
-      }
+      },
     }));
     setTrackingOpen(order.id);
   };
@@ -79,132 +178,193 @@ export default function AdminOrders() {
 
   return (
     <AdminLayout>
-      <h1 className="text-3xl font-display font-bold text-foreground mb-8">Manage Orders</h1>
+      <div className="mb-8">
+        <h1 className="text-3xl font-display font-bold text-foreground">Manage Orders</h1>
+        {data?.total != null && (
+          <p className="text-sm text-muted-foreground mt-1">{data.total} total orders</p>
+        )}
+      </div>
 
       {isLoading ? (
         <div className="space-y-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-20 bg-muted animate-pulse rounded-2xl" />)}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-24 bg-muted animate-pulse rounded-2xl" />
+          ))}
         </div>
       ) : (
-        <div className="space-y-4">
-          {data?.orders.map(order => (
-            <div key={order.id} className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
-              {/* Order Header */}
-              <div className="p-4 md:p-6 flex flex-wrap justify-between items-start gap-4">
-                <div className="flex flex-wrap gap-6">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Order</p>
-                    <p className="font-bold text-primary">#{order.id}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Date</p>
-                    <p className="font-medium text-sm">{format(new Date(order.createdAt), "MMM dd, yyyy")}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Customer</p>
-                    <p className="font-medium text-sm">{(order as any).shippingAddress?.fullName || order.userName}</p>
-                    <p className="text-xs text-muted-foreground">{(order as any).shippingAddress?.city}, {(order as any).shippingAddress?.state}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Amount</p>
-                    <p className="font-bold text-primary">{formatPrice(order.total)}</p>
-                    <p className="text-xs text-muted-foreground uppercase">{order.paymentMethod}</p>
-                  </div>
-                  {order.paymentMethod === "cod" && (
+        <>
+          <div className="space-y-4">
+            {data?.orders.map((order) => (
+              <div key={order.id} className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+                {/* Order Header */}
+                <div className="p-4 md:p-6 flex flex-wrap justify-between items-start gap-4">
+                  <div className="flex flex-wrap gap-6">
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider">COD Charge</p>
-                      <p className="font-medium text-orange-600 text-sm">{formatPrice(order.codCharge)} paid</p>
-                      <p className="text-xs text-muted-foreground">{formatPrice(order.subtotal)} at delivery</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Order</p>
+                      <p className="font-bold text-primary">#{order.id}</p>
                     </div>
-                  )}
-                </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Date</p>
+                      <p className="font-medium text-sm">{format(new Date(order.createdAt), "MMM dd, yyyy")}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Customer</p>
+                      <p className="font-medium text-sm">
+                        {(order as any).shippingAddress?.fullName || order.userName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {(order as any).shippingAddress?.city}, {(order as any).shippingAddress?.state}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Amount</p>
+                      <p className="font-bold text-primary">{formatPrice(order.total)}</p>
+                      <p className="text-xs text-muted-foreground uppercase">{order.paymentMethod}</p>
+                    </div>
+                    {order.paymentMethod === "cod" && (
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">COD Charge</p>
+                        <p className="font-medium text-orange-600 text-sm">{formatPrice(order.codCharge)} paid</p>
+                        <p className="text-xs text-muted-foreground">{formatPrice(order.subtotal)} at delivery</p>
+                      </div>
+                    )}
+                  </div>
 
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => openTracking(order)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-50 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
-                  >
-                    <Truck className="w-3.5 h-3.5" />
-                    {(order as any).trackingId ? "Edit Tracking" : "Add Tracking"}
-                  </button>
-                  <select
-                    value={order.status}
-                    onChange={e => handleStatusChange(order.id, e.target.value)}
-                    disabled={updateMutation.isPending}
-                    className={`border rounded-lg px-3 py-1.5 text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none uppercase tracking-wider ${statusColors[order.status] || "bg-background border-border"}`}
-                  >
-                    {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {/* Tracking Input (inline expand) */}
-              {trackingOpen === order.id && (
-                <div className="border-t border-border p-4 md:p-6 bg-blue-50">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-semibold text-blue-900 flex items-center gap-2"><Truck className="w-4 h-4" /> Add / Update Tracking</h4>
-                    <button onClick={() => setTrackingOpen(null)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-blue-800 mb-1">Tracking ID / AWB Number</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 1234567890"
-                        value={trackingForms[order.id]?.trackingId || ""}
-                        onChange={e => setTrackingForms(prev => ({ ...prev, [order.id]: { ...prev[order.id], trackingId: e.target.value } }))}
-                        className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm focus:ring-2 focus:ring-blue-300 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-blue-800 mb-1">Tracking URL (Optional)</label>
-                      <input
-                        type="url"
-                        placeholder="https://track.courier.com/..."
-                        value={trackingForms[order.id]?.trackingUrl || ""}
-                        onChange={e => setTrackingForms(prev => ({ ...prev, [order.id]: { ...prev[order.id], trackingUrl: e.target.value } }))}
-                        className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm focus:ring-2 focus:ring-blue-300 outline-none"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-medium text-blue-800 mb-1">Note to Customer (Optional)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Shipped via Delhivery, expected by tomorrow"
-                        value={trackingForms[order.id]?.trackingNote || ""}
-                        onChange={e => setTrackingForms(prev => ({ ...prev, [order.id]: { ...prev[order.id], trackingNote: e.target.value } }))}
-                        className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm focus:ring-2 focus:ring-blue-300 outline-none"
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4 flex justify-end">
+                  <div className="flex items-center gap-3">
                     <button
-                      onClick={() => saveTracking(order.id)}
-                      disabled={savingTracking === order.id}
-                      className="flex items-center gap-2 px-5 py-2 bg-blue-700 text-white rounded-lg text-sm font-medium hover:bg-blue-800 transition-colors disabled:opacity-60"
+                      onClick={() => openTracking(order)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-50 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
                     >
-                      <Save className="w-4 h-4" />
-                      {savingTracking === order.id ? "Saving..." : "Save Tracking"}
+                      <Truck className="w-3.5 h-3.5" />
+                      {(order as any).trackingId ? "Edit Tracking" : "Add Tracking"}
                     </button>
+                    <select
+                      value={order.status}
+                      onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                      disabled={updateMutation.isPending}
+                      className={`border rounded-lg px-3 py-1.5 text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none uppercase tracking-wider ${
+                        statusColors[order.status] || "bg-background border-border"
+                      }`}
+                    >
+                      {statuses.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-              )}
 
-              {/* Tracking Display */}
-              {!(trackingOpen === order.id) && (order as any).trackingId && (
-                <div className="border-t border-border px-4 md:px-6 py-3 bg-muted/20 text-xs text-muted-foreground flex items-center gap-2">
-                  <Truck className="w-3.5 h-3.5 text-blue-500" />
-                  <span>Tracking: <strong className="text-foreground">{(order as any).trackingId}</strong></span>
-                  {(order as any).trackingNote && <span>— {(order as any).trackingNote}</span>}
-                </div>
-              )}
-            </div>
-          ))}
+                {/* Shipping Address (collapsible, copyable) */}
+                <AddressBlock address={(order as any).shippingAddress} />
 
-          {data?.orders.length === 0 && (
-            <div className="text-center py-20 text-muted-foreground">No orders yet.</div>
-          )}
-        </div>
+                {/* Tracking Input (inline expand) */}
+                {trackingOpen === order.id && (
+                  <div className="border-t border-border p-4 md:p-6 bg-blue-50">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold text-blue-900 flex items-center gap-2">
+                        <Truck className="w-4 h-4" /> Add / Update Tracking
+                      </h4>
+                      <button
+                        onClick={() => setTrackingOpen(null)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-blue-800 mb-1">
+                          Tracking ID / AWB Number
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 1234567890"
+                          value={trackingForms[order.id]?.trackingId || ""}
+                          onChange={(e) =>
+                            setTrackingForms((prev) => ({
+                              ...prev,
+                              [order.id]: { ...prev[order.id], trackingId: e.target.value },
+                            }))
+                          }
+                          className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm focus:ring-2 focus:ring-blue-300 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-blue-800 mb-1">
+                          Tracking URL (Optional)
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://track.courier.com/..."
+                          value={trackingForms[order.id]?.trackingUrl || ""}
+                          onChange={(e) =>
+                            setTrackingForms((prev) => ({
+                              ...prev,
+                              [order.id]: { ...prev[order.id], trackingUrl: e.target.value },
+                            }))
+                          }
+                          className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm focus:ring-2 focus:ring-blue-300 outline-none"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-medium text-blue-800 mb-1">
+                          Note to Customer (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Shipped via Delhivery, expected by tomorrow"
+                          value={trackingForms[order.id]?.trackingNote || ""}
+                          onChange={(e) =>
+                            setTrackingForms((prev) => ({
+                              ...prev,
+                              [order.id]: { ...prev[order.id], trackingNote: e.target.value },
+                            }))
+                          }
+                          className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm focus:ring-2 focus:ring-blue-300 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        onClick={() => saveTracking(order.id)}
+                        disabled={savingTracking === order.id}
+                        className="flex items-center gap-2 px-5 py-2 bg-blue-700 text-white rounded-lg text-sm font-medium hover:bg-blue-800 transition-colors disabled:opacity-60"
+                      >
+                        <Save className="w-4 h-4" />
+                        {savingTracking === order.id ? "Saving..." : "Save Tracking"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tracking Display */}
+                {!(trackingOpen === order.id) && (order as any).trackingId && (
+                  <div className="border-t border-border px-4 md:px-6 py-3 bg-muted/20 text-xs text-muted-foreground flex items-center gap-2">
+                    <Truck className="w-3.5 h-3.5 text-blue-500" />
+                    <span>
+                      Tracking: <strong className="text-foreground">{(order as any).trackingId}</strong>
+                    </span>
+                    {(order as any).trackingNote && <span>— {(order as any).trackingNote}</span>}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {data?.orders.length === 0 && (
+              <div className="text-center py-20 text-muted-foreground bg-card border border-border rounded-2xl">
+                No orders yet.
+              </div>
+            )}
+          </div>
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={data?.total}
+          />
+        </>
       )}
     </AdminLayout>
   );
