@@ -1,25 +1,26 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { ordersTable, usersTable, productsTable } from "@workspace/db/schema";
-import { eq, desc, count, sql } from "drizzle-orm";
+import { eq, desc, count, sql, inArray } from "drizzle-orm";
 
 const router: IRouter = Router();
 
 async function requireAdmin(req: any, res: any): Promise<boolean> {
   const userId = req.session?.userId;
-  if (!userId) {
-    res.status(401).json({ error: "Not authenticated" });
-    return false;
-  }
-  const { db: dbLib } = await import("@workspace/db");
-  const { usersTable: ut } = await import("@workspace/db/schema");
-  const { eq: eqFn } = await import("drizzle-orm");
-  const [user] = await dbLib.select().from(ut).where(eqFn(ut.id, userId)).limit(1);
-  if (!user || user.role !== "admin") {
-    res.status(403).json({ error: "Forbidden" });
-    return false;
-  }
+  if (!userId) { res.status(401).json({ error: "Not authenticated" }); return false; }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  if (!user || user.role !== "admin") { res.status(403).json({ error: "Forbidden" }); return false; }
   return true;
+}
+
+function serializeOrder(o: any, userName?: string) {
+  return {
+    ...o,
+    userName,
+    subtotal: parseFloat(o.subtotal),
+    codCharge: parseFloat(o.codCharge),
+    total: parseFloat(o.total),
+  };
 }
 
 router.get("/orders", async (req, res) => {
@@ -35,22 +36,16 @@ router.get("/orders", async (req, res) => {
 
     const orders = await query.orderBy(desc(ordersTable.createdAt)).limit(limit).offset(offset);
 
-    const userIds = [...new Set(orders.map((o) => o.userId))];
+    const userIds = [...new Set(orders.map(o => o.userId))];
     const users = userIds.length > 0
-      ? await db.select().from(usersTable).where(sql`${usersTable.id} = ANY(${userIds})`)
+      ? await db.select().from(usersTable).where(inArray(usersTable.id, userIds))
       : [];
-    const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+    const userMap = Object.fromEntries(users.map(u => [u.id, u]));
 
     const [{ total }] = await db.select({ total: count() }).from(ordersTable);
 
     res.json({
-      orders: orders.map((o) => ({
-        ...o,
-        userName: userMap[o.userId]?.name,
-        subtotal: parseFloat(o.subtotal),
-        codCharge: parseFloat(o.codCharge),
-        total: parseFloat(o.total),
-      })),
+      orders: orders.map(o => serializeOrder(o, userMap[o.userId]?.name)),
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -68,13 +63,25 @@ router.put("/orders/:id/status", async (req, res) => {
     const { status } = req.body;
     const [order] = await db.update(ordersTable).set({ status }).where(eq(ordersTable.id, id)).returning();
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, order.userId)).limit(1);
-    res.json({
-      ...order,
-      userName: user?.name,
-      subtotal: parseFloat(order.subtotal),
-      codCharge: parseFloat(order.codCharge),
-      total: parseFloat(order.total),
-    });
+    res.json(serializeOrder(order, user?.name));
+  } catch (e) {
+    req.log.error(e);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.put("/orders/:id/tracking", async (req, res) => {
+  if (!(await requireAdmin(req, res))) return;
+  try {
+    const id = parseInt(req.params.id);
+    const { trackingId, trackingUrl, trackingNote } = req.body;
+    const [order] = await db
+      .update(ordersTable)
+      .set({ trackingId: trackingId || null, trackingUrl: trackingUrl || null, trackingNote: trackingNote || null })
+      .where(eq(ordersTable.id, id))
+      .returning();
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, order.userId)).limit(1);
+    res.json(serializeOrder(order, user?.name));
   } catch (e) {
     req.log.error(e);
     res.status(500).json({ error: "Internal server error" });
@@ -91,17 +98,13 @@ router.get("/stats", async (req, res) => {
     const revenueResult = await db.select({ revenue: sql<number>`COALESCE(SUM(total::numeric), 0)` }).from(ordersTable);
     const totalRevenue = parseFloat(String(revenueResult[0]?.revenue ?? 0));
 
-    const recentOrders = await db
-      .select()
-      .from(ordersTable)
-      .orderBy(desc(ordersTable.createdAt))
-      .limit(5);
+    const recentOrders = await db.select().from(ordersTable).orderBy(desc(ordersTable.createdAt)).limit(5);
 
-    const userIds = [...new Set(recentOrders.map((o) => o.userId))];
+    const userIds = [...new Set(recentOrders.map(o => o.userId))];
     const users = userIds.length > 0
-      ? await db.select().from(usersTable).where(sql`${usersTable.id} = ANY(${userIds})`)
+      ? await db.select().from(usersTable).where(inArray(usersTable.id, userIds))
       : [];
-    const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+    const userMap = Object.fromEntries(users.map(u => [u.id, u]));
 
     const topProductsRaw = await db
       .select({
@@ -119,14 +122,8 @@ router.get("/stats", async (req, res) => {
       totalRevenue,
       totalProducts,
       totalUsers,
-      recentOrders: recentOrders.map((o) => ({
-        ...o,
-        userName: userMap[o.userId]?.name,
-        subtotal: parseFloat(o.subtotal),
-        codCharge: parseFloat(o.codCharge),
-        total: parseFloat(o.total),
-      })),
-      topProducts: topProductsRaw.map((p) => ({
+      recentOrders: recentOrders.map(o => serializeOrder(o, userMap[o.userId]?.name)),
+      topProducts: topProductsRaw.map(p => ({
         productId: p.productId,
         productName: p.productName,
         totalSold: parseInt(String(p.totalSold)),

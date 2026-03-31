@@ -7,6 +7,7 @@ import cartRouter from "./cart";
 import ordersRouter from "./orders";
 import adminRouter from "./admin";
 import uploadRouter from "./upload";
+import razorpayRouter from "./razorpay";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/cart", cartRouter);
 router.use("/orders", ordersRouter);
 router.use("/admin", adminRouter);
 router.use("/upload", uploadRouter);
+router.use("/razorpay", razorpayRouter);
 
 export default router;
