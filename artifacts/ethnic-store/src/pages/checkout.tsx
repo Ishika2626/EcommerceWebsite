@@ -45,6 +45,12 @@ export default function CheckoutPage() {
       .catch(() => setRazorpayConfigured(false));
   }, []);
 
+  useEffect(() => {
+    if (cart && cart.items.some(item => (item.product as any).isCodAvailable === false)) {
+      setPaymentMethod("advance");
+    }
+  }, [cart]);
+
   const createOrder = useCreateOrder({
     mutation: {
       onSuccess: (order) => {
@@ -66,6 +72,8 @@ export default function CheckoutPage() {
   }
 
   const itemCount = cart.items.length;
+  const codBlockedItems = cart.items.filter(item => (item.product as any).isCodAvailable === false);
+  const isCodBlocked = codBlockedItems.length > 0;
   const codCharge = paymentMethod === "cod" ? itemCount * COD_CHARGE_PER_ITEM : 0;
   const amountPayableNow = paymentMethod === "cod" ? codCharge : cart.subtotal;
   const amountAtDelivery = paymentMethod === "cod" ? cart.subtotal : 0;
@@ -218,26 +226,35 @@ export default function CheckoutPage() {
                   </div>
                 </label>
 
-                <label className={`flex items-start gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-colors ${paymentMethod === "cod" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-                  <input type="radio" name="payment" value="cod" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} className="mt-1 w-5 h-5 text-primary focus:ring-primary" />
+                <label className={`flex items-start gap-4 p-5 rounded-2xl border-2 transition-colors ${isCodBlocked ? "opacity-60 cursor-not-allowed border-border bg-muted/30" : `cursor-pointer ${paymentMethod === "cod" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}`}>
+                  <input type="radio" name="payment" value="cod" checked={paymentMethod === "cod"} onChange={() => !isCodBlocked && setPaymentMethod("cod")} disabled={isCodBlocked} className="mt-1 w-5 h-5 text-primary focus:ring-primary" />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <Truck className="w-4 h-4 text-primary" />
                       <span className="font-bold text-foreground">Cash on Delivery (COD)</span>
+                      {isCodBlocked && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">Not available</span>}
                     </div>
-                    <p className="text-sm text-muted-foreground">Pay a small booking charge online to confirm your order. Balance paid at delivery.</p>
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                        <p className="text-xs text-orange-700 font-medium">Pay Online Now</p>
-                        <p className="text-sm font-bold text-orange-900 mt-0.5">{formatPrice(itemCount * COD_CHARGE_PER_ITEM)}</p>
-                        <p className="text-xs text-orange-600">₹{COD_CHARGE_PER_ITEM} × {itemCount} item{itemCount > 1 ? "s" : ""}</p>
+                    {isCodBlocked ? (
+                      <div className="mt-2 text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                        COD is not available for: <span className="font-semibold">{codBlockedItems.map(i => i.product.name).join(", ")}</span>. Please use online payment.
                       </div>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <p className="text-xs text-blue-700 font-medium">Pay at Delivery</p>
-                        <p className="text-sm font-bold text-blue-900 mt-0.5">{formatPrice(cart.subtotal)}</p>
-                        <p className="text-xs text-blue-600">Product price in cash</p>
-                      </div>
-                    </div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-muted-foreground">Pay a small booking charge online to confirm your order. Balance paid at delivery.</p>
+                        <div className="mt-3 grid grid-cols-2 gap-3">
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <p className="text-xs text-orange-700 font-medium">Pay Online Now</p>
+                            <p className="text-sm font-bold text-orange-900 mt-0.5">{formatPrice(itemCount * COD_CHARGE_PER_ITEM)}</p>
+                            <p className="text-xs text-orange-600">₹{COD_CHARGE_PER_ITEM} × {itemCount} item{itemCount > 1 ? "s" : ""}</p>
+                          </div>
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p className="text-xs text-blue-700 font-medium">Pay at Delivery</p>
+                            <p className="text-sm font-bold text-blue-900 mt-0.5">{formatPrice(cart.subtotal)}</p>
+                            <p className="text-xs text-blue-600">Product price in cash</p>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </label>
               </div>

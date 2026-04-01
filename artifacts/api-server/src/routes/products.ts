@@ -58,6 +58,7 @@ router.get("/", async (req, res) => {
         colors: productsTable.colors,
         isFeatured: productsTable.isFeatured,
         isActive: productsTable.isActive,
+        isCodAvailable: productsTable.isCodAvailable,
         createdAt: productsTable.createdAt,
       })
       .from(productsTable)
@@ -103,6 +104,7 @@ router.get("/:id", async (req, res) => {
         colors: productsTable.colors,
         isFeatured: productsTable.isFeatured,
         isActive: productsTable.isActive,
+        isCodAvailable: productsTable.isCodAvailable,
         createdAt: productsTable.createdAt,
       })
       .from(productsTable)
@@ -123,14 +125,14 @@ router.get("/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   if (!(await requireAdmin(req, res))) return;
   try {
-    const { name, sku, description, price, originalPrice, categoryId, images, stock, sizes, colors, isFeatured, isActive } = req.body;
+    const { name, sku, description, price, originalPrice, categoryId, images, stock, sizes, colors, isFeatured, isActive, isCodAvailable } = req.body;
     if (!name || price == null || !categoryId || stock == null) {
       res.status(400).json({ error: "Missing required fields" });
       return;
     }
     const [product] = await db
       .insert(productsTable)
-      .values({ name, sku: sku || null, description, price: price.toString(), originalPrice: originalPrice?.toString(), categoryId, images: images || [], stock, sizes: sizes || [], colors: colors || [], isFeatured: isFeatured ?? false, isActive: isActive ?? true })
+      .values({ name, sku: sku || null, description, price: price.toString(), originalPrice: originalPrice?.toString(), categoryId, images: images || [], stock, sizes: sizes || [], colors: colors || [], isFeatured: isFeatured ?? false, isActive: isActive ?? true, isCodAvailable: isCodAvailable ?? true })
       .returning();
     const [category] = await db.select().from(categoriesTable).where(eq(categoriesTable.id, product.categoryId)).limit(1);
     res.status(201).json({ ...product, price: parseFloat(product.price), originalPrice: product.originalPrice ? parseFloat(product.originalPrice) : null, categoryName: category?.name });
@@ -144,10 +146,10 @@ router.put("/:id", async (req, res) => {
   if (!(await requireAdmin(req, res))) return;
   try {
     const id = parseInt(req.params.id);
-    const { name, sku, description, price, originalPrice, categoryId, images, stock, sizes, colors, isFeatured, isActive } = req.body;
+    const { name, sku, description, price, originalPrice, categoryId, images, stock, sizes, colors, isFeatured, isActive, isCodAvailable } = req.body;
     const [product] = await db
       .update(productsTable)
-      .set({ name, sku: sku || null, description, price: price?.toString(), originalPrice: originalPrice?.toString(), categoryId, images, stock, sizes, colors, isFeatured, isActive })
+      .set({ name, sku: sku || null, description, price: price?.toString(), originalPrice: originalPrice?.toString(), categoryId, images, stock, sizes, colors, isFeatured, isActive, isCodAvailable: isCodAvailable ?? true })
       .where(eq(productsTable.id, id))
       .returning();
     const [category] = await db.select().from(categoriesTable).where(eq(categoriesTable.id, product.categoryId)).limit(1);

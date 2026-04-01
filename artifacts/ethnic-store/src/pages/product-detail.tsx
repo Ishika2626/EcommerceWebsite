@@ -3,7 +3,7 @@ import { useGetProduct } from "@workspace/api-client-react";
 import { useRoute } from "wouter";
 import { formatPrice, cn } from "@/lib/utils";
 import { useState } from "react";
-import { ShoppingBag, Heart, Share2, Shield, Truck, MessageCircle } from "lucide-react";
+import { ShoppingBag, Heart, Share2, Shield, Truck, MessageCircle, CreditCard } from "lucide-react";
 import { useCartStore } from "@/hooks/use-cart-store";
 import { useToast } from "@/hooks/use-toast";
 
@@ -215,6 +215,34 @@ export default function ProductDetail() {
                 <Share2 className="w-6 h-6" />
               </button>
             </div>
+
+            {/* COD / Payment Info */}
+            {(product as any).isCodAvailable ? (
+              <div className="mb-6 grid grid-cols-2 gap-3">
+                <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                  <Truck className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-semibold text-green-800">COD Available</p>
+                    <p className="text-green-700">+₹200 booking charge per item</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                  <CreditCard className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-semibold text-blue-800">Advance Payment</p>
+                    <p className="text-blue-700">Pay full amount online, no extra charge</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-6 flex items-start gap-3 p-4 bg-orange-50 border border-orange-200 rounded-xl">
+                <CreditCard className="w-5 h-5 text-orange-500 mt-0.5 shrink-0" />
+                <div className="text-sm">
+                  <p className="font-semibold text-orange-800">Advance Payment Only</p>
+                  <p className="text-orange-700">COD is not available for this product. Please pay online.</p>
+                </div>
+              </div>
+            )}
 
             {/* Perks */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-8 border-t border-border">

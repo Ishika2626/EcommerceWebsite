@@ -17,6 +17,7 @@ export const productsTable = pgTable("products", {
   colors: jsonb("colors").$type<string[]>().default([]).notNull(),
   isFeatured: boolean("is_featured").default(false).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
+  isCodAvailable: boolean("is_cod_available").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

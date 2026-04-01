@@ -29,7 +29,7 @@ export default function AdminProductForm() {
 
   const [formData, setFormData] = useState({
     name: "", sku: "", description: "", price: "", originalPrice: "", categoryId: "", stock: "10",
-    isActive: true, isFeatured: false
+    isActive: true, isFeatured: false, isCodAvailable: true
   });
   const [images, setImages] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string>("");
@@ -47,6 +47,7 @@ export default function AdminProductForm() {
         stock: existingProduct.stock.toString(),
         isActive: existingProduct.isActive ?? true,
         isFeatured: existingProduct.isFeatured ?? false,
+        isCodAvailable: (existingProduct as any).isCodAvailable ?? true,
       });
       setImages(existingProduct.images || []);
       setSizes(existingProduct.sizes?.join(", ") || "");
@@ -93,6 +94,7 @@ export default function AdminProductForm() {
       colors: colors.split(",").map(s => s.trim()).filter(Boolean),
       isActive: formData.isActive,
       isFeatured: formData.isFeatured,
+      isCodAvailable: formData.isCodAvailable,
     } as any;
 
     if (isEdit) {
@@ -197,6 +199,37 @@ export default function AdminProductForm() {
                   <input type="checkbox" checked={formData.isFeatured} onChange={e => setFormData({...formData, isFeatured: e.target.checked})} className="w-5 h-5 text-primary rounded" />
                   Featured on Homepage
                 </label>
+              </div>
+              <div className="md:col-span-2 pt-2">
+                <p className="text-sm font-semibold mb-3">Cash on Delivery (COD)</p>
+                <div className="flex gap-4">
+                  <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer flex-1 transition-colors ${formData.isCodAvailable ? "border-green-500 bg-green-50" : "border-border"}`}>
+                    <input
+                      type="radio"
+                      name="codAvailable"
+                      checked={formData.isCodAvailable}
+                      onChange={() => setFormData({...formData, isCodAvailable: true})}
+                      className="w-4 h-4 text-green-600"
+                    />
+                    <div>
+                      <p className="font-medium text-sm text-green-800">COD Available</p>
+                      <p className="text-xs text-green-600">₹200 extra per item for COD</p>
+                    </div>
+                  </label>
+                  <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer flex-1 transition-colors ${!formData.isCodAvailable ? "border-orange-500 bg-orange-50" : "border-border"}`}>
+                    <input
+                      type="radio"
+                      name="codAvailable"
+                      checked={!formData.isCodAvailable}
+                      onChange={() => setFormData({...formData, isCodAvailable: false})}
+                      className="w-4 h-4 text-orange-600"
+                    />
+                    <div>
+                      <p className="font-medium text-sm text-orange-800">Advance Only</p>
+                      <p className="text-xs text-orange-600">Online payment required</p>
+                    </div>
+                  </label>
+                </div>
               </div>
             </div>
           </div>

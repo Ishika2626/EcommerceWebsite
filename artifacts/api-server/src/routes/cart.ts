@@ -27,6 +27,7 @@ async function getCartData(userId: number) {
         colors: productsTable.colors,
         isFeatured: productsTable.isFeatured,
         isActive: productsTable.isActive,
+        isCodAvailable: productsTable.isCodAvailable,
         createdAt: productsTable.createdAt,
       },
     })
