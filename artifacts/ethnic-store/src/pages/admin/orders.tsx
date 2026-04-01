@@ -23,6 +23,7 @@ function AddressBlock({ address }: { address: any }) {
   const lines = [
     address.fullName,
     address.phone,
+    address.alternatePhone ? `Alt: ${address.alternatePhone}` : null,
     address.addressLine1,
     address.addressLine2,
     [address.city, address.state, address.pincode].filter(Boolean).join(", "),
@@ -109,6 +110,7 @@ function AddressBlock({ address }: { address: any }) {
 interface OrderItem {
   productId: number;
   productName: string;
+  productImage?: string;
   price: number;
   quantity: number;
   size?: string;
@@ -185,9 +187,17 @@ function ItemsBlock({ items, total }: { items: OrderItem[]; total: number }) {
             <div className="divide-y divide-border">
               {items.map((item, i) => (
                 <div key={i} className="flex items-start gap-3 px-4 py-3">
+                  {item.productImage && (
+                    <img
+                      src={item.productImage}
+                      alt={item.productName}
+                      className="w-14 h-18 rounded-lg object-cover border border-border shrink-0"
+                      style={{ height: "72px" }}
+                    />
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm text-foreground truncate">{item.productName}</p>
-                    <p className="text-xs text-muted-foreground">ID: #{item.productId}</p>
+                    <p className="text-xs text-muted-foreground">Product ID: #{item.productId}</p>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {item.size && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-medium">

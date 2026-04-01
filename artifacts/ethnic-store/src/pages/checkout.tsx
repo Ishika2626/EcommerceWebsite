@@ -35,7 +35,7 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [razorpayConfigured, setRazorpayConfigured] = useState<boolean | null>(null);
   const [address, setAddress] = useState({
-    fullName: "", phone: "", addressLine1: "", addressLine2: "", city: "", state: "", pincode: ""
+    fullName: "", phone: "", alternatePhone: "", addressLine1: "", addressLine2: "", city: "", state: "", pincode: ""
   });
 
   useEffect(() => {
@@ -165,9 +165,13 @@ export default function CheckoutPage() {
                   <label className="block text-sm font-medium mb-1.5 text-muted-foreground">Full Name *</label>
                   <input required name="fullName" value={address.fullName} onChange={handleInputChange} className="w-full p-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
                 </div>
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-sm font-medium mb-1.5 text-muted-foreground">Phone Number *</label>
                   <input required name="phone" value={address.phone} onChange={handleInputChange} className="w-full p-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-muted-foreground">Alternate Phone (Optional)</label>
+                  <input name="alternatePhone" value={address.alternatePhone} onChange={handleInputChange} className="w-full p-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-1.5 text-muted-foreground">Address Line 1 *</label>

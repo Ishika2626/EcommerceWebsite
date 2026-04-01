@@ -93,7 +93,7 @@ export default function Home() {
               { icon: Truck, title: "Free Shipping", desc: "Across India on all orders" },
               { icon: Globe, title: "International", desc: "Worldwide delivery available" },
               { icon: ShieldCheck, title: "Secure Payment", desc: "COD & Online via Razorpay" },
-              { icon: RefreshCcw, title: "Easy Returns", desc: "7-day return policy" },
+              { icon: RefreshCcw, title: "Exchange Policy", desc: "Exchange on damage/defect with proof" },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-center gap-3 bg-card p-4 rounded-2xl shadow-sm min-w-0">
                 <div className="bg-primary/10 p-3 rounded-full text-primary shrink-0">

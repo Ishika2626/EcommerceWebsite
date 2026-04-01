@@ -28,7 +28,7 @@ export default function AdminProductForm() {
   });
 
   const [formData, setFormData] = useState({
-    name: "", description: "", price: "", originalPrice: "", categoryId: "", stock: "10",
+    name: "", sku: "", description: "", price: "", originalPrice: "", categoryId: "", stock: "10",
     isActive: true, isFeatured: false
   });
   const [images, setImages] = useState<string[]>([]);
@@ -39,6 +39,7 @@ export default function AdminProductForm() {
     if (isEdit && existingProduct) {
       setFormData({
         name: existingProduct.name,
+        sku: (existingProduct as any).sku || "",
         description: existingProduct.description || "",
         price: existingProduct.price.toString(),
         originalPrice: existingProduct.originalPrice?.toString() || "",
@@ -81,6 +82,7 @@ export default function AdminProductForm() {
 
     const payload = {
       name: formData.name,
+      sku: formData.sku || undefined,
       description: formData.description,
       price: Number(formData.price),
       originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
@@ -91,7 +93,7 @@ export default function AdminProductForm() {
       colors: colors.split(",").map(s => s.trim()).filter(Boolean),
       isActive: formData.isActive,
       isFeatured: formData.isFeatured,
-    };
+    } as any;
 
     if (isEdit) {
       updateMutation.mutate({ id, data: payload });
@@ -116,6 +118,10 @@ export default function AdminProductForm() {
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Product Name</label>
                 <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-3 bg-background border border-border rounded-xl focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Product SKU / ID <span className="text-muted-foreground font-normal">(e.g. VV-0360)</span></label>
+                <input value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} placeholder="e.g. VV-0360" className="w-full p-3 bg-background border border-border rounded-xl focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Description</label>

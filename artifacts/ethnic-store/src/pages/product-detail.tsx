@@ -3,7 +3,7 @@ import { useGetProduct } from "@workspace/api-client-react";
 import { useRoute } from "wouter";
 import { formatPrice, cn } from "@/lib/utils";
 import { useState } from "react";
-import { ShoppingBag, Heart, Share2, Shield, Truck, RefreshCcw } from "lucide-react";
+import { ShoppingBag, Heart, Share2, Shield, Truck, MessageCircle } from "lucide-react";
 import { useCartStore } from "@/hooks/use-cart-store";
 import { useToast } from "@/hooks/use-toast";
 
@@ -112,6 +112,9 @@ export default function ProductDetail() {
             <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight mb-4">
               {product.name}
             </h1>
+            {(product as any).sku && (
+              <p className="text-xs text-muted-foreground mb-4">SKU: <span className="font-mono">{(product as any).sku}</span></p>
+            )}
             
             <div className="flex items-end gap-4 mb-6">
               <span className="text-3xl font-bold text-primary">{formatPrice(product.price)}</span>
@@ -221,11 +224,37 @@ export default function ProductDetail() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="bg-primary/10 p-2 rounded-lg text-primary"><Truck className="w-5 h-5" /></div>
-                <div className="text-sm"><p className="font-semibold">Free Delivery</p><p className="text-muted-foreground">On orders over ₹5k</p></div>
+                <div className="text-sm"><p className="font-semibold">Free Delivery</p><p className="text-muted-foreground">Free on all orders in India</p></div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="bg-primary/10 p-2 rounded-lg text-primary"><RefreshCcw className="w-5 h-5" /></div>
-                <div className="text-sm"><p className="font-semibold">Easy Returns</p><p className="text-muted-foreground">7 day return policy</p></div>
+                <div className="bg-orange-100 p-2 rounded-lg text-orange-600"><MessageCircle className="w-5 h-5" /></div>
+                <div className="text-sm"><p className="font-semibold">Exchange Policy</p><p className="text-muted-foreground">Exchange on damage/defect only with opening video</p></div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><Share2 className="w-5 h-5" /></div>
+                <div className="text-sm">
+                  <p className="font-semibold">Share Your Look</p>
+                  <p className="text-muted-foreground">
+                    Tag us on{" "}
+                    <a href="https://www.instagram.com/vastraverge/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Instagram</a>
+                    {" "}or{" "}
+                    <a href="https://wa.me/919974460041" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">WhatsApp</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* International Order Note */}
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-start gap-3">
+              <span className="text-xl shrink-0">🌍</span>
+              <div className="text-sm">
+                <p className="font-semibold text-blue-900">International Order?</p>
+                <p className="text-blue-700 mt-0.5">For international shipping, please connect with us on{" "}
+                  <a href="https://wa.me/919974460041" target="_blank" rel="noopener noreferrer" className="font-medium underline">WhatsApp</a>
+                  {" "}or{" "}
+                  <a href="https://www.instagram.com/vastraverge/" target="_blank" rel="noopener noreferrer" className="font-medium underline">Instagram</a>
+                  {" "}for a shipping quote.
+                </p>
               </div>
             </div>
           </div>
